@@ -35,6 +35,7 @@ def get_first_infobox_text(html: str) -> str:
 
     if not results:
         raise LookupError("Page has no infobox")
+    # print(results[0].text)
     return results[0].text
 
 
@@ -111,6 +112,23 @@ def get_birth_date(name: str) -> str:
 
     return match.group("birth")
 
+def get_draft_year(name: str) -> str:
+    """Gets draft year date of the given person
+
+    Args:
+        name - name of the person
+
+    Returns:
+        draft year date of the given person
+    """
+    infobox_text = clean_text(get_first_infobox_text(get_page_html(name)))
+    pattern = r"(?:NBA draft\D*)(?P<draft>[\d]+)"
+    error_text = (
+        "Page infobox has no draft year information"
+    )
+    match = get_match(infobox_text, pattern, error_text)
+
+    return match.group("draft")
 
 # below are a set of actions. Each takes a list argument and returns a list of answers
 # according to the action and the argument. It is important that each function returns a
@@ -140,6 +158,16 @@ def polar_radius(matches: List[str]) -> List[str]:
     """
     return [get_polar_radius(matches[0])]
 
+def draft_year(matches: List[str]) -> List[str]:
+    """Returns draft year date of named person in matches (assuming played in NBA)
+
+    Args:
+        matches - match from pattern of person's name to find draft year date
+
+    Returns:
+        draft year date of named person
+    """
+    return [get_draft_year(" ".join(matches))]
 
 # dummy argument is ignored and doesn't matter
 def bye_action(dummy: List[str]) -> None:
@@ -156,6 +184,9 @@ Action = Callable[[List[str]], List[Any]]
 pa_list: List[Tuple[Pattern, Action]] = [
     ("when was % born".split(), birth_date),
     ("what is the polar radius of %".split(), polar_radius),
+    ("when was % drafted".split(), draft_year),
+    ("in what year was % drafted".split(), draft_year),
+    ("% draft year".split(), draft_year),
     (["bye"], bye_action),
 ]
 
@@ -184,7 +215,7 @@ def search_pa_list(src: List[str]) -> List[str]:
 def query_loop() -> None:
     """The simple query loop. The try/except structure is to catch Ctrl-C or Ctrl-D
     characters and exit gracefully"""
-    print("Welcome to the movie database!\n")
+    print("Welcome to the wikipedia chatbot!\n")
     while True:
         try:
             print()
